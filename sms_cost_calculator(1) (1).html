@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Калькулятор стоимости SMS — SMS Smart</title>
+  <style>
+    :root {
+      --bg: #f6f7fb;
+      --card: #ffffff;
+      --text: #16181d;
+      --muted: #6f7682;
+      --line: #e7e9ef;
+      --accent: #5b4df6;
+      --accent-dark: #4638e6;
+      --accent-soft: #eeecff;
+      --positive: #13795b;
+      --shadow: 0 14px 40px rgba(24, 28, 48, 0.08);
+      --radius: 20px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 10% 0%, rgba(91, 77, 246, 0.10), transparent 28%),
+        radial-gradient(circle at 95% 10%, rgba(35, 183, 143, 0.08), transparent 25%),
+        var(--bg);
+    }
+
+    .page {
+      width: min(1180px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 42px 0 64px;
+    }
+
+    .hero {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 24px;
+      margin-bottom: 24px;
+    }
+
+    h1 {
+      margin: 0 0 10px;
+      font-size: clamp(28px, 4vw, 44px);
+      line-height: 1.05;
+      letter-spacing: -0.035em;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.55;
+      max-width: 720px;
+    }
+
+    .tariff-badge {
+      flex: 0 0 auto;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: var(--accent-soft);
+      color: var(--accent-dark);
+      font-weight: 700;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 390px 1fr;
+      gap: 22px;
+      align-items: start;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(25, 30, 55, 0.06);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .control-card {
+      padding: 22px;
+      position: sticky;
+      top: 20px;
+    }
+
+    .section-title {
+      font-size: 13px;
+      font-weight: 800;
+      color: var(--muted);
+      letter-spacing: 0.07em;
+      text-transform: uppercase;
+      margin: 0 0 12px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      background: #f2f3f7;
+      padding: 4px;
+      border-radius: 13px;
+      margin-bottom: 22px;
+    }
+
+    .tab {
+      appearance: none;
+      border: 0;
+      background: transparent;
+      color: #646b77;
+      border-radius: 10px;
+      padding: 11px 10px;
+      font: inherit;
+      font-size: 13px;
+      font-weight: 750;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .tab.active {
+      background: #fff;
+      color: var(--text);
+      box-shadow: 0 3px 12px rgba(23, 28, 52, 0.08);
+    }
+
+    .field {
+      margin-bottom: 15px;
+    }
+
+    .field label {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 7px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    .field label span:last-child {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 650;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      border: 1px solid #dfe2ea;
+      background: #fff;
+      color: var(--text);
+      border-radius: 12px;
+      padding: 13px 14px;
+      font: inherit;
+      font-size: 16px;
+      font-weight: 650;
+      outline: none;
+      transition: 0.16s ease;
+    }
+
+    input[type="number"]:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px rgba(91, 77, 246, 0.10);
+    }
+
+    .hint {
+      margin: -2px 0 18px;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .share-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin: 12px 0 2px;
+    }
+
+    .share-pill {
+      border-radius: 11px;
+      background: #f7f8fb;
+      padding: 9px 10px;
+      font-size: 12px;
+      color: #5d6470;
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .share-pill strong { color: var(--text); }
+
+    .manual-fields[hidden],
+    .total-fields[hidden] { display: none; }
+
+    .actions {
+      display: flex;
+      gap: 10px;
+      margin-top: 19px;
+    }
+
+    .btn {
+      appearance: none;
+      border: 0;
+      border-radius: 12px;
+      padding: 12px 15px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .btn-primary {
+      flex: 1;
+      color: #fff;
+      background: var(--accent);
+    }
+
+    .btn-primary:hover { background: var(--accent-dark); }
+
+    .btn-secondary {
+      color: #5e6470;
+      background: #f2f3f7;
+    }
+
+    .vat-note {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .results {
+      display: grid;
+      gap: 18px;
+    }
+
+    .summary-card {
+      padding: 24px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .summary-card::after {
+      content: "";
+      width: 190px;
+      height: 190px;
+      border-radius: 50%;
+      position: absolute;
+      right: -85px;
+      top: -95px;
+      background: rgba(91, 77, 246, 0.075);
+      pointer-events: none;
+    }
+
+    .total-label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 750;
+      margin-bottom: 7px;
+    }
+
+    .grand-total {
+      font-size: clamp(34px, 5vw, 52px);
+      line-height: 1;
+      letter-spacing: -0.04em;
+      font-weight: 850;
+      margin-bottom: 19px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .metric {
+      background: #f7f8fb;
+      border-radius: 13px;
+      padding: 12px;
+      min-width: 0;
+    }
+
+    .metric span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .metric strong {
+      display: block;
+      font-size: 16px;
+      letter-spacing: -0.015em;
+      overflow-wrap: anywhere;
+    }
+
+    .table-card {
+      overflow: hidden;
+    }
+
+    .table-head {
+      padding: 20px 22px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .table-head h2 {
+      margin: 0;
+      font-size: 19px;
+      letter-spacing: -0.02em;
+    }
+
+    .table-head small {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border-top: 1px solid var(--line);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 700px;
+    }
+
+    th, td {
+      padding: 14px 17px;
+      border-bottom: 1px solid var(--line);
+      text-align: right;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    th {
+      background: #fafbfc;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.035em;
+      text-transform: uppercase;
+    }
+
+    th:first-child, td:first-child { text-align: left; }
+
+    tbody tr:last-child td { border-bottom: 0; }
+
+    td.operator {
+      font-weight: 760;
+    }
+
+    td.cost {
+      font-weight: 820;
+      color: #2a2d34;
+    }
+
+    .price-note-card {
+      padding: 18px 22px;
+    }
+
+    .price-note-card h3 {
+      margin: 0 0 10px;
+      font-size: 15px;
+    }
+
+    .price-list {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .price-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px;
+    }
+
+    .price-item span {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+
+    .price-item strong {
+      font-size: 13px;
+    }
+
+    .footnote {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.45;
+      margin-top: 12px;
+    }
+
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      .control-card { position: static; }
+      .summary-grid { grid-template-columns: 1fr 1fr; }
+      .price-list { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 560px) {
+      .page { width: min(100% - 20px, 1180px); padding-top: 24px; }
+      .hero { display: block; }
+      .tariff-badge { display: inline-block; margin-top: 14px; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .price-list { grid-template-columns: 1fr; }
+      .share-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <main class="page">
+    <header class="hero">
+      <div>
+        <h1>Калькулятор стоимости SMS</h1>
+        <p class="subtitle">
+          Расчёт по тарифу SMS Smart. Можно указать общее число сообщений
+          или ввести объёмы отдельно по группам операторов.
+        </p>
+      </div>
+      <div class="tariff-badge">SMS Smart · НДС 22%</div>
+    </header>
+
+    <section class="layout">
+      <aside class="card control-card">
+        <p class="section-title">Исходные данные</p>
+
+        <div class="tabs" role="tablist" aria-label="Режим расчёта">
+          <button class="tab active" id="tab-total" type="button">Общий объём</button>
+          <button class="tab" id="tab-manual" type="button">По операторам</button>
+        </div>
+
+        <div class="total-fields" id="total-fields">
+          <div class="field">
+            <label for="totalSms">
+              <span>Количество SMS</span>
+              <span>шт.</span>
+            </label>
+            <input id="totalSms" type="number" min="0" step="1" value="100000" inputmode="numeric" />
+          </div>
+
+          <p class="hint">
+            Объём автоматически распределяется по ориентировочной структуре операторов.
+            Оставшиеся 7% относятся к категории «Прочие».
+          </p>
+
+          <div class="share-grid">
+            <div class="share-pill"><span>МТС</span><strong>30,4%</strong></div>
+            <div class="share-pill"><span>МегаФон</span><strong>28,8%</strong></div>
+            <div class="share-pill"><span>T2</span><strong>17,9%</strong></div>
+            <div class="share-pill"><span>Билайн</span><strong>15,9%</strong></div>
+            <div class="share-pill"><span>Прочие</span><strong>7,0%</strong></div>
+          </div>
+        </div>
+
+        <div class="manual-fields" id="manual-fields" hidden>
+          <div class="field">
+            <label for="mts"><span>МТС</span><span>шт.</span></label>
+            <input id="mts" type="number" min="0" step="1" value="0" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="megafon"><span>МегаФон / Скартел</span><span>шт.</span></label>
+            <input id="megafon" type="number" min="0" step="1" value="0" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="t2"><span>T2 (Теле2)</span><span>шт.</span></label>
+            <input id="t2" type="number" min="0" step="1" value="0" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="beeline"><span>Билайн</span><span>шт.</span></label>
+            <input id="beeline" type="number" min="0" step="1" value="0" inputmode="numeric" />
+          </div>
+          <div class="field">
+            <label for="others"><span>Прочие операторы РФ</span><span>шт.</span></label>
+            <input id="others" type="number" min="0" step="1" value="0" inputmode="numeric" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" id="calculate" type="button">Рассчитать</button>
+          <button class="btn btn-secondary" id="reset" type="button">Сбросить</button>
+        </div>
+
+        <div class="vat-note">
+          Расчёт выполняется по ценам без НДС из тарифной таблицы.
+          НДС 22% начисляется на стоимость каждой группы операторов.
+        </div>
+      </aside>
+
+      <div class="results">
+        <section class="card summary-card">
+          <div class="total-label">Итого к оплате, с НДС</div>
+          <div class="grand-total" id="grandTotal">—</div>
+
+          <div class="summary-grid">
+            <div class="metric">
+              <span>Всего SMS</span>
+              <strong id="metricSms">—</strong>
+            </div>
+            <div class="metric">
+              <span>Без НДС</span>
+              <strong id="metricNet">—</strong>
+            </div>
+            <div class="metric">
+              <span>НДС 22%</span>
+              <strong id="metricVat">—</strong>
+            </div>
+            <div class="metric">
+              <span>Средняя цена / SMS</span>
+              <strong id="metricAvg">—</strong>
+            </div>
+          </div>
+        </section>
+
+        <section class="card table-card">
+          <div class="table-head">
+            <h2>Детализация расчёта</h2>
+            <small id="modeLabel">Автораспределение по долям</small>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Оператор</th>
+                  <th>Доля</th>
+                  <th>SMS</th>
+                  <th>Цена без НДС</th>
+                  <th>Цена с НДС</th>
+                  <th>Стоимость с НДС</th>
+                </tr>
+              </thead>
+              <tbody id="breakdown"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card price-note-card">
+          <h3>Тарифные цены</h3>
+          <div class="price-list" id="priceList"></div>
+          <div class="footnote">
+            «Прочие» объединяют операторов из таблицы с ценой 9,52 ₽ без НДС:
+            Мотив, К-Телеком, КТК-Телеком, Сбербанк-Телеком, Вайнах Телеком и прочие операторы РФ.
+            Расчётные цены с НДС в интерфейсе округляются до копеек только для отображения;
+            итог считается от исходной цены без НДС.
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const VAT = 0.22;
+
+    const OPERATORS = [
+      { id: "mts",      name: "МТС",                  netPrice: 6.37,  share: 0.304 },
+      { id: "megafon",  name: "МегаФон / Скартел",   netPrice: 10.24, share: 0.288 },
+      { id: "t2",       name: "T2 (Теле2)",           netPrice: 8.45,  share: 0.179 },
+      { id: "beeline",  name: "Билайн",               netPrice: 11.44, share: 0.159 },
+      { id: "others",   name: "Прочие операторы РФ", netPrice: 9.52,  share: 0.070 }
+    ];
+
+    let mode = "total";
+
+    const money = new Intl.NumberFormat("ru-RU", {
+      style: "currency",
+      currency: "RUB",
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    });
+
+    const integer = new Intl.NumberFormat("ru-RU", {
+      maximumFractionDigits: 0
+    });
+
+    const percent = new Intl.NumberFormat("ru-RU", {
+      style: "percent",
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    });
+
+    const safeInt = (value) => {
+      const n = Number(value);
+      return Number.isFinite(n) && n > 0 ? Math.floor(n) : 0;
+    };
+
+    function distributeTotal(total) {
+      const exact = OPERATORS.map(op => total * op.share);
+      const counts = exact.map(Math.floor);
+      let remainder = total - counts.reduce((sum, value) => sum + value, 0);
+
+      const order = exact
+        .map((value, index) => ({ index, fraction: value - Math.floor(value) }))
+        .sort((a, b) => b.fraction - a.fraction);
+
+      let cursor = 0;
+      while (remainder > 0) {
+        counts[order[cursor % order.length].index] += 1;
+        remainder -= 1;
+        cursor += 1;
+      }
+
+      return counts;
+    }
+
+    function getCounts() {
+      if (mode === "total") {
+        return distributeTotal(safeInt(document.getElementById("totalSms").value));
+      }
+
+      return OPERATORS.map(op => safeInt(document.getElementById(op.id).value));
+    }
+
+    function calculate() {
+      const counts = getCounts();
+      const totalSms = counts.reduce((sum, value) => sum + value, 0);
+
+      let totalNet = 0;
+      let totalGross = 0;
+
+      const rows = OPERATORS.map((op, index) => {
+        const count = counts[index];
+        const net = count * op.netPrice;
+        const vat = net * VAT;
+        const gross = net + vat;
+        const actualShare = totalSms > 0 ? count / totalSms : 0;
+
+        totalNet += net;
+        totalGross += gross;
+
+        return { ...op, count, net, vat, gross, actualShare };
+      });
+
+      const totalVat = totalGross - totalNet;
+      const avgGross = totalSms > 0 ? totalGross / totalSms : 0;
+
+      document.getElementById("grandTotal").textContent = money.format(totalGross);
+      document.getElementById("metricSms").textContent = integer.format(totalSms);
+      document.getElementById("metricNet").textContent = money.format(totalNet);
+      document.getElementById("metricVat").textContent = money.format(totalVat);
+      document.getElementById("metricAvg").textContent = totalSms > 0 ? money.format(avgGross) : money.format(0);
+
+      document.getElementById("modeLabel").textContent =
+        mode === "total" ? "Автораспределение по долям" : "Ручной ввод по операторам";
+
+      document.getElementById("breakdown").innerHTML = rows.map(row => {
+        const grossUnit = row.netPrice * (1 + VAT);
+        return `
+          <tr>
+            <td class="operator">${row.name}</td>
+            <td>${percent.format(row.actualShare)}</td>
+            <td>${integer.format(row.count)}</td>
+            <td>${money.format(row.netPrice)}</td>
+            <td>${money.format(grossUnit)}</td>
+            <td class="cost">${money.format(row.gross)}</td>
+          </tr>
+        `;
+      }).join("");
+    }
+
+    function setMode(nextMode) {
+      mode = nextMode;
+
+      const totalTab = document.getElementById("tab-total");
+      const manualTab = document.getElementById("tab-manual");
+      const totalFields = document.getElementById("total-fields");
+      const manualFields = document.getElementById("manual-fields");
+
+      const isTotal = mode === "total";
+      totalTab.classList.toggle("active", isTotal);
+      manualTab.classList.toggle("active", !isTotal);
+      totalFields.hidden = !isTotal;
+      manualFields.hidden = isTotal;
+
+      calculate();
+    }
+
+    function reset() {
+      if (mode === "total") {
+        document.getElementById("totalSms").value = 100000;
+      } else {
+        OPERATORS.forEach(op => {
+          document.getElementById(op.id).value = 0;
+        });
+      }
+      calculate();
+    }
+
+    function renderPrices() {
+      document.getElementById("priceList").innerHTML = OPERATORS.map(op => `
+        <div class="price-item">
+          <span>${op.name}</span>
+          <strong>${money.format(op.netPrice)} → ${money.format(op.netPrice * (1 + VAT))}</strong>
+        </div>
+      `).join("");
+    }
+
+    document.getElementById("tab-total").addEventListener("click", () => setMode("total"));
+    document.getElementById("tab-manual").addEventListener("click", () => setMode("manual"));
+    document.getElementById("calculate").addEventListener("click", calculate);
+    document.getElementById("reset").addEventListener("click", reset);
+
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+      input.addEventListener("input", calculate);
+      input.addEventListener("blur", () => {
+        if (Number(input.value) < 0 || !Number.isFinite(Number(input.value))) input.value = 0;
+        calculate();
+      });
+    });
+
+    renderPrices();
+    calculate();
+  </script>
+</body>
+</html>
