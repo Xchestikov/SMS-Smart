@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Калькулятор стоимости SMS — SMS Smart</title>
+  <title>Партнёрский калькулятор SMS — SMS Smart</title>
   <style>
     :root {
       --bg: #f6f7fb;
@@ -406,11 +406,68 @@
       margin-top: 12px;
     }
 
+
+    .partner-card {
+      padding: 22px;
+      border: 1px solid rgba(91, 77, 246, 0.16);
+      background: linear-gradient(135deg, rgba(91,77,246,0.06), rgba(255,255,255,1));
+    }
+
+    .partner-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .partner-metric {
+      border-radius: 13px;
+      background: #fff;
+      border: 1px solid var(--line);
+      padding: 13px;
+    }
+
+    .partner-metric span {
+      display:block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+
+    .partner-metric strong {
+      display:block;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+
+    .partner-total {
+      margin-top: 14px;
+      border-radius: 14px;
+      padding: 16px;
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .partner-total span {
+      display:block;
+      font-size: 12px;
+      opacity: .82;
+      margin-bottom: 4px;
+    }
+
+    .partner-total strong {
+      display:block;
+      font-size: 30px;
+      letter-spacing: -0.035em;
+    }
+
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .control-card { position: static; }
       .summary-grid { grid-template-columns: 1fr 1fr; }
       .price-list { grid-template-columns: 1fr 1fr; }
+      .partner-grid { grid-template-columns: 1fr; }
     }
 
     @media (max-width: 560px) {
@@ -427,13 +484,12 @@
   <main class="page">
     <header class="hero">
       <div>
-        <h1>Калькулятор стоимости SMS</h1>
+        <h1>Партнёрский калькулятор SMS</h1>
         <p class="subtitle">
-          Расчёт по тарифу SMS Smart. Можно указать общее число сообщений
-          или ввести объёмы отдельно по группам операторов.
+          Расчёт стоимости SMS и агентского вознаграждения партнёра. Можно указать общий объём сообщений или ввести объёмы отдельно по операторам.
         </p>
       </div>
-      <div class="tariff-badge">SMS Smart · НДС 22%</div>
+      <div class="tariff-badge">SMS Smart · Партнёрская версия</div>
     </header>
 
     <section class="layout">
@@ -444,6 +500,15 @@
           <button class="tab active" id="tab-total" type="button">Общий объём</button>
           <button class="tab" id="tab-manual" type="button">По операторам</button>
         </div>
+
+        <div class="field">
+          <label for="licensePrice">
+            <span>Стоимость лицензии для клиента</span>
+            <span>мин. 1 000 ₽</span>
+          </label>
+          <input id="licensePrice" type="number" min="1000" step="100" value="1000" inputmode="numeric" />
+        </div>
+        <p class="hint">Стандартная стоимость лицензии — 1 000 ₽. Вся сумма сверх 1 000 ₽ добавляется к агентскому вознаграждению.</p>
 
         <div class="total-fields" id="total-fields">
           <div class="field">
@@ -525,6 +590,29 @@
               <strong id="metricAvg">—</strong>
             </div>
           </div>
+        </section>
+
+        <section class="card partner-card">
+          <p class="section-title">Агентское вознаграждение</p>
+          <div class="partner-grid">
+            <div class="partner-metric">
+              <span>10% от стоимости SMS</span>
+              <strong id="rewardSms">—</strong>
+            </div>
+            <div class="partner-metric">
+              <span>Наценка на лицензию</span>
+              <strong id="rewardLicense">—</strong>
+            </div>
+            <div class="partner-metric">
+              <span>Цена лицензии клиенту</span>
+              <strong id="licenseShown">—</strong>
+            </div>
+          </div>
+          <div class="partner-total">
+            <span>Итого агентское вознаграждение</span>
+            <strong id="rewardTotal">—</strong>
+          </div>
+          <div class="footnote">Формула: 10% × общая стоимость SMS с НДС + (стоимость лицензии − 1 000 ₽). Если лицензия установлена в 1 000 ₽, дополнительное вознаграждение по лицензии равно 0 ₽.</div>
         </section>
 
         <section class="card table-card">
@@ -648,11 +736,22 @@
       const totalVat = totalGross - totalNet;
       const avgGross = totalSms > 0 ? totalGross / totalSms : 0;
 
+      const licenseInput = document.getElementById("licensePrice");
+      let licensePrice = Number(licenseInput.value);
+      if (!Number.isFinite(licensePrice) || licensePrice < 1000) licensePrice = 1000;
+      const rewardSms = totalGross * 0.10;
+      const rewardLicense = Math.max(0, licensePrice - 1000);
+      const rewardTotal = rewardSms + rewardLicense;
+
       document.getElementById("grandTotal").textContent = money.format(totalGross);
       document.getElementById("metricSms").textContent = integer.format(totalSms);
       document.getElementById("metricNet").textContent = money.format(totalNet);
       document.getElementById("metricVat").textContent = money.format(totalVat);
       document.getElementById("metricAvg").textContent = totalSms > 0 ? money.format(avgGross) : money.format(0);
+      document.getElementById("rewardSms").textContent = money.format(rewardSms);
+      document.getElementById("rewardLicense").textContent = money.format(rewardLicense);
+      document.getElementById("licenseShown").textContent = money.format(licensePrice);
+      document.getElementById("rewardTotal").textContent = money.format(rewardTotal);
 
       document.getElementById("modeLabel").textContent =
         mode === "total" ? "Автораспределение по долям" : "Ручной ввод по операторам";
@@ -690,6 +789,7 @@
     }
 
     function reset() {
+      document.getElementById("licensePrice").value = 1000;
       if (mode === "total") {
         document.getElementById("totalSms").value = 100000;
       } else {
@@ -717,7 +817,11 @@
     document.querySelectorAll('input[type="number"]').forEach(input => {
       input.addEventListener("input", calculate);
       input.addEventListener("blur", () => {
-        if (Number(input.value) < 0 || !Number.isFinite(Number(input.value))) input.value = 0;
+        if (input.id === "licensePrice") {
+          if (!Number.isFinite(Number(input.value)) || Number(input.value) < 1000) input.value = 1000;
+        } else if (Number(input.value) < 0 || !Number.isFinite(Number(input.value))) {
+          input.value = 0;
+        }
         calculate();
       });
     });
